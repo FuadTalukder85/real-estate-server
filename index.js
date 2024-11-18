@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const bcrypt = require("bcrypt");
 require("dotenv").config();
 const port = process.env.PORT || 4900;
 
@@ -30,8 +31,83 @@ async function run() {
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
     const db = client.db("realEstate");
+    const user = db.collection("users");
     const propertyCollection = db.collection("property");
 
+    // User Registration
+    app.post("/register", async (req, res) => {
+      const { name, email, password } = req.body;
+
+      // Check if email already exists
+      const existingUser = await user.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: "User already exists",
+        });
+      }
+
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const joinedDate = new Date();
+      const formattedDate =
+        joinedDate.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }) +
+        " " +
+        joinedDate.toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+
+      // Insert user into the database
+      await user.insertOne({
+        name,
+        email,
+        password: hashedPassword,
+        date: formattedDate,
+      });
+
+      res.status(201).json({
+        success: true,
+        message: "User registered successfully",
+      });
+    });
+    // User Login
+    app.post("/login", async (req, res) => {
+      const { email, password } = req.body;
+
+      // Find user by email
+      const user = await user.findOne({ email });
+      if (!user) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Compare hashed password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Generate JWT token
+      const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET, {
+        expiresIn: process.env.EXPIRES_IN,
+      });
+
+      res.json({
+        success: true,
+        message: "Login successful",
+        token,
+      });
+    });
+    //get all users
+    app.get("/users", async (req, res) => {
+      const result = await user.find().toArray();
+      res.send(result);
+    });
     // property api
     app.post("/property", async (req, res) => {
       const addProperty = req.body;
