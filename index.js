@@ -111,7 +111,26 @@ async function run() {
     // property api
     app.post("/property", async (req, res) => {
       const addProperty = req.body;
+      const date = new Date();
+      const formattedDate =
+        date.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }) +
+        " " +
+        date.toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+      addProperty.date = formattedDate;
       const result = await propertyCollection.insertOne(addProperty);
+      res.send(result);
+    });
+    // get all property
+    app.get("/property", async (req, res) => {
+      const result = await propertyCollection.find().toArray();
       res.send(result);
     });
   } finally {
