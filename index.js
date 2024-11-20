@@ -9,7 +9,7 @@ const port = process.env.PORT || 4900;
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(express.json());
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = process.env.MONGODB_URI;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -131,6 +131,13 @@ async function run() {
     // get all property
     app.get("/property", async (req, res) => {
       const result = await propertyCollection.find().toArray();
+      res.send(result);
+    });
+    //get single property item by id
+    app.get("/property/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await propertyCollection.findOne(query);
       res.send(result);
     });
   } finally {
