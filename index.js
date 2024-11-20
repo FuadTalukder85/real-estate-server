@@ -139,6 +139,12 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await propertyCollection.findOne(query);
       res.send(result);
+    }); // delete property by id
+    app.delete("/property/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await propertyCollection.deleteOne(query);
+      res.send(result);
     });
   } finally {
     // Ensures that the client will close when you finish/error
