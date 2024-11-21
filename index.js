@@ -108,6 +108,25 @@ async function run() {
       const result = await user.find().toArray();
       res.send(result);
     });
+    // make user role
+    app.patch("/user/role/:id", async (req, res) => {
+      const id = req.params.id;
+      const { role } = req.body;
+      if (!role || (role !== "Admin" && role !== "Agent" && role !== "User")) {
+        return res.status(400).send({ Error: "Invalid role" });
+      }
+      const filter = { _id: new ObjectId(id) };
+      updateDoc = {
+        $set: { role },
+      };
+      try {
+        const result = await user.updateOne(filter, updateDoc);
+        res.send(result);
+      } catch (error) {
+        console.error("Error updating role", error);
+        res.status(500).send({ error: "failed to update role" });
+      }
+    });
     // property api
     app.post("/property", async (req, res) => {
       const addProperty = req.body;
