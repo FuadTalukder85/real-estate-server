@@ -36,7 +36,7 @@ async function run() {
 
     // User Registration
     app.post("/register", async (req, res) => {
-      const { name, email, password } = req.body;
+      const { name, email, password, image, number, address } = req.body;
 
       // Check if email already exists
       const existingUser = await user.findOne({ email });
@@ -68,6 +68,9 @@ async function run() {
         name,
         email,
         password: hashedPassword,
+        image,
+        number,
+        address,
         date: formattedDate,
       });
 
@@ -75,6 +78,35 @@ async function run() {
         success: true,
         message: "User registered successfully",
       });
+    });
+    // Update user by id
+    app.put("/user/:id", async (req, res) => {
+      const id = req.params.id;
+      const updateUser = req.body;
+
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const userData = {
+        $set: {
+          name: updateUser.name,
+          image: updateUser.image,
+          number: updateUser.number,
+          address: updateUser.address,
+        },
+      };
+      try {
+        const result = await user.updateOne(filter, userData, options);
+
+        // Check if the update was successful and respond accordingly
+        if (result.modifiedCount === 1 || result.upsertedCount === 1) {
+          res.status(200).json({ message: "user updated successfully" });
+        } else {
+          res.status(404).json({ error: "user not found" });
+        }
+      } catch (err) {
+        console.error("Error updating user:", err);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
     // User Login
     app.post("/login", async (req, res) => {
