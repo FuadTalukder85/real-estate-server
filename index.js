@@ -169,23 +169,76 @@ async function run() {
     // property api
     app.post("/property", async (req, res) => {
       const addProperty = req.body;
-      const date = new Date();
-      const formattedDate =
-        date.toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        }) +
-        " " +
-        date.toLocaleTimeString("en-GB", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        });
-      addProperty.date = formattedDate;
-      const result = await propertyCollection.insertOne(addProperty);
-      res.send(result);
+      try {
+        // Fetch the user by email or ID (assuming req.body contains the user's email or ID)
+        const userEmail = addProperty.email; // Make sure you pass `userEmail` in the request body
+        const userInfo = await user.findOne({ email: userEmail });
+        if (!userInfo) {
+          return res
+            .status(400)
+            .json({ success: false, message: "User not found" });
+        }
+        // Check the user's role
+        if (userInfo.role === "Agent") {
+          addProperty.status = "pending"; // Set status to 'pending' for Agents
+        } else if (userInfo.role === "Admin") {
+          addProperty.status = "approved";
+        }
+        // Add formatted date
+        const date = new Date();
+        const formattedDate =
+          date.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          }) +
+          " " +
+          date.toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          });
+        addProperty.date = formattedDate;
+        // Insert the property into the collection
+        const result = await propertyCollection.insertOne(addProperty);
+        res.status(201).json({ success: true, data: result });
+      } catch (error) {
+        console.error(error);
+        res
+          .status(500)
+          .json({ success: false, message: "Internal server error" });
+      }
     });
+    // make approved agent property
+    app.put("/property/:id", async (req, res) => {
+      const propertyId = req.params.id;
+      if (!ObjectId.isValid(propertyId)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid property ID" });
+      }
+      const { status } = req.body;
+      try {
+        const result = await propertyCollection.updateOne(
+          { _id: new ObjectId(propertyId) },
+          { $set: { status } }
+        );
+        if (result.matchedCount === 0) {
+          return res
+            .status(404)
+            .json({ success: false, message: "Property not found" });
+        }
+        res
+          .status(200)
+          .json({ success: true, message: `Status updated to ${status}` });
+      } catch (error) {
+        console.error("Error updating property:", error);
+        res
+          .status(500)
+          .json({ success: false, message: "Internal server error" });
+      }
+    });
+
     // get all property
     app.get("/property", async (req, res) => {
       const result = await propertyCollection.find().toArray();
