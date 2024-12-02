@@ -140,6 +140,13 @@ async function run() {
       const result = await user.find().toArray();
       res.send(result);
     });
+    //get single user by id
+    app.get("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await user.findOne(query);
+      res.send(result);
+    });
     // make user role
     app.patch("/user/role/:id", async (req, res) => {
       const id = req.params.id;
@@ -184,13 +191,14 @@ async function run() {
       const result = await propertyCollection.find().toArray();
       res.send(result);
     });
-    //get single property item by id
+    //get single property by id
     app.get("/property/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await propertyCollection.findOne(query);
       res.send(result);
-    }); // delete property by id
+    });
+    // delete property by id
     app.delete("/property/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
