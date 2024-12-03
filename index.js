@@ -258,6 +258,42 @@ async function run() {
       const result = await propertyCollection.deleteOne(query);
       res.send(result);
     });
+
+    // all stats
+    async function getPendingPropertiesCount() {
+      const client = new MongoClient(uri);
+      try {
+        // total properties count
+        const totalProperties = await propertyCollection.countDocuments();
+        // Count properties with status = "pending"
+        const pendingProperties = await propertyCollection.countDocuments({
+          status: "pending",
+        });
+        // Count properties with status = "pending"
+        const totalAgent = await user.countDocuments();
+
+        return { totalProperties, pendingProperties, totalAgent };
+      } catch (error) {
+        console.error("Error fetching properties:", error);
+        throw error;
+      } finally {
+        await client.close();
+      }
+    }
+    // API endpoint
+    app.get("/allstats/count", async (req, res) => {
+      try {
+        const { totalProperties, pendingProperties, totalAgent } =
+          await getPendingPropertiesCount();
+        res.status(200).json({
+          totalProperty: totalProperties,
+          pendingProperty: pendingProperties,
+          totalAgent: totalAgent,
+        });
+      } catch (error) {
+        res.status(500).json({ message: "Internal server error", error });
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
