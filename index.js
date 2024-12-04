@@ -258,7 +258,54 @@ async function run() {
       const result = await propertyCollection.deleteOne(query);
       res.send(result);
     });
+    // Update property by id
+    app.put("/property/:id", async (req, res) => {
+      const id = req.params.id;
+      const updateProperty = req.body;
 
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const propertyData = {
+        $set: {
+          propertyName: updateProperty.propertyName,
+          propertyImage01: updateProperty.propertyImage01,
+          propertyImage02: updateProperty.propertyImage02,
+          propertyImage03: updateProperty.propertyImage03,
+          propertyImage04: updateProperty.propertyImage04,
+          price: updateProperty.price,
+          propertyFor: updateProperty.propertyFor,
+          propertyCategory: updateProperty.propertyCategory,
+          bedroom: updateProperty.bedroom,
+          bathroom: updateProperty.bathroom,
+          squareFoot: updateProperty.squareFoot,
+          floor: updateProperty.floor,
+          buildYear: updateProperty.buildYear,
+          address: updateProperty.address,
+          zipCode: updateProperty.zipCode,
+          city: updateProperty.city,
+          country: updateProperty.country,
+          description: updateProperty.description,
+          status: updateProperty.status,
+        },
+      };
+      try {
+        const result = await propertyCollection.updateOne(
+          filter,
+          propertyData,
+          options
+        );
+
+        // Check if the update was successful and respond accordingly
+        if (result.modifiedCount === 1 || result.upsertedCount === 1) {
+          res.status(200).json({ message: "property updated successfully" });
+        } else {
+          res.status(404).json({ error: "property not found" });
+        }
+      } catch (err) {
+        console.error("Error updating property:", err);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
     // all stats
     async function getPendingPropertiesCount() {
       const client = new MongoClient(uri);
