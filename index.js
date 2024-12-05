@@ -209,35 +209,6 @@ async function run() {
           .json({ success: false, message: "Internal server error" });
       }
     });
-    // make approved agent property
-    app.put("/property/:id", async (req, res) => {
-      const propertyId = req.params.id;
-      if (!ObjectId.isValid(propertyId)) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid property ID" });
-      }
-      const { status } = req.body;
-      try {
-        const result = await propertyCollection.updateOne(
-          { _id: new ObjectId(propertyId) },
-          { $set: { status } }
-        );
-        if (result.matchedCount === 0) {
-          return res
-            .status(404)
-            .json({ success: false, message: "Property not found" });
-        }
-        res
-          .status(200)
-          .json({ success: true, message: `Status updated to ${status}` });
-      } catch (error) {
-        console.error("Error updating property:", error);
-        res
-          .status(500)
-          .json({ success: false, message: "Internal server error" });
-      }
-    });
 
     // get all property
     app.get("/property", async (req, res) => {
@@ -258,11 +229,39 @@ async function run() {
       const result = await propertyCollection.deleteOne(query);
       res.send(result);
     });
+    // make approved agent property
+    app.patch("/property/:id", async (req, res) => {
+      const statusId = req.params.id;
+      if (!ObjectId.isValid(statusId)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid property ID" });
+      }
+      const { status } = req.body;
+      try {
+        const result = await propertyCollection.updateOne(
+          { _id: new ObjectId(statusId) },
+          { $set: { status } }
+        );
+        if (result.matchedCount === 0) {
+          return res
+            .status(404)
+            .json({ success: false, message: "Property not found" });
+        }
+        res
+          .status(200)
+          .json({ success: true, message: `SSSSStatus updated to ${status}` });
+      } catch (error) {
+        console.error("Error updating property:", error);
+        res
+          .status(500)
+          .json({ success: false, message: "Internal server error" });
+      }
+    });
     // Update property by id
     app.put("/property/:id", async (req, res) => {
       const id = req.params.id;
       const updateProperty = req.body;
-
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const propertyData = {
@@ -285,27 +284,16 @@ async function run() {
           city: updateProperty.city,
           country: updateProperty.country,
           description: updateProperty.description,
-          status: updateProperty.status,
         },
       };
-      try {
-        const result = await propertyCollection.updateOne(
-          filter,
-          propertyData,
-          options
-        );
-
-        // Check if the update was successful and respond accordingly
-        if (result.modifiedCount === 1 || result.upsertedCount === 1) {
-          res.status(200).json({ message: "property updated successfully" });
-        } else {
-          res.status(404).json({ error: "property not found" });
-        }
-      } catch (err) {
-        console.error("Error updating property:", err);
-        res.status(500).json({ error: "Internal server error" });
-      }
+      const result = await propertyCollection.updateOne(
+        filter,
+        propertyData,
+        options
+      );
+      res.send(result);
     });
+
     // all stats
     async function getPendingPropertiesCount() {
       const client = new MongoClient(uri);
