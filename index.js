@@ -33,6 +33,7 @@ async function run() {
     const db = client.db("realEstate");
     const user = db.collection("users");
     const propertyCollection = db.collection("property");
+    const review = db.collection("reviews");
 
     // User Registration
     app.post("/register", async (req, res) => {
@@ -293,7 +294,31 @@ async function run() {
       );
       res.send(result);
     });
-
+    // post review
+    app.post("/review", async (req, res) => {
+      const addReview = req.body;
+      const date = new Date();
+      const formattedDate =
+        date.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }) +
+        " " +
+        date.toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+      addReview.date = formattedDate;
+      const result = await review.insertOne(addReview);
+      res.send(result);
+    });
+    // get all review
+    app.get("/reviews", async (req, res) => {
+      const result = await review.find().toArray();
+      res.send(result);
+    });
     // all stats
     async function getPendingPropertiesCount() {
       const client = new MongoClient(uri);
