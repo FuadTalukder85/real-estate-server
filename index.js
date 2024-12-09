@@ -34,6 +34,7 @@ async function run() {
     const user = db.collection("users");
     const propertyCollection = db.collection("property");
     const review = db.collection("reviews");
+    const contactMsg = db.collection("contactMsg");
 
     // User Registration
     app.post("/register", async (req, res) => {
@@ -319,6 +320,38 @@ async function run() {
       const result = await review.find().toArray();
       res.send(result);
     });
+    // post contact
+    app.post("/contactMsg", async (req, res) => {
+      const addContact = req.body;
+      const date = new Date();
+      const formattedDate =
+        date.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }) +
+        " " +
+        date.toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+      addContact.date = formattedDate;
+      const result = await contactMsg.insertOne(addContact);
+      res.send(result);
+    });
+    // get all contact
+    app.get("/contact", async (req, res) => {
+      const result = await contactMsg.find().toArray();
+      res.send(result);
+    });
+    //get single contact msg by id
+    app.get("/contact/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await contactMsg.findOne(query);
+      res.send(result);
+    });
     // all stats
     async function getPendingPropertiesCount() {
       const client = new MongoClient(uri);
@@ -329,10 +362,19 @@ async function run() {
         const pendingProperties = await propertyCollection.countDocuments({
           status: "pending",
         });
-        // Count properties with status = "pending"
-        const totalAgent = await user.countDocuments();
-
-        return { totalProperties, pendingProperties, totalAgent };
+        // Count total agent
+        const totalAgent = await user.countDocuments({ role: "Agent" });
+        // Count contact message
+        const totalContact = await contactMsg.countDocuments();
+        // Count review
+        const totalReview = await review.countDocuments();
+        return {
+          totalProperties,
+          pendingProperties,
+          totalAgent,
+          totalContact,
+          totalReview,
+        };
       } catch (error) {
         console.error("Error fetching properties:", error);
         throw error;
@@ -343,12 +385,19 @@ async function run() {
     // API endpoint
     app.get("/allstats/count", async (req, res) => {
       try {
-        const { totalProperties, pendingProperties, totalAgent } =
-          await getPendingPropertiesCount();
+        const {
+          totalProperties,
+          pendingProperties,
+          totalAgent,
+          totalContact,
+          totalReview,
+        } = await getPendingPropertiesCount();
         res.status(200).json({
           totalProperty: totalProperties,
           pendingProperty: pendingProperties,
           totalAgent: totalAgent,
+          totalReview: totalReview,
+          totalContact: totalContact,
         });
       } catch (error) {
         res.status(500).json({ message: "Internal server error", error });
