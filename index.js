@@ -6,7 +6,12 @@ require("dotenv").config();
 const port = process.env.PORT || 4900;
 
 // middleware
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(
+  cors({
+    origin: "https://real-estate-snowy-five.vercel.app",
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -403,21 +408,20 @@ async function run() {
         res.status(500).json({ message: "Internal server error", error });
       }
     });
+    app.get("/", (req, res) => {
+      const serverStatus = {
+        message: "Server is running smoothly",
+        timestamp: new Date(),
+      };
+      res.json(serverStatus);
+    });
+
+    app.listen(port, () => {
+      console.log("run");
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
   }
 }
 run().catch(console.dir);
-
-app.get("/", (req, res) => {
-  const serverStatus = {
-    message: "Server is running smoothly",
-    timestamp: new Date(),
-  };
-  res.json(serverStatus);
-});
-
-app.listen(port, () => {
-  console.log("run");
-});
