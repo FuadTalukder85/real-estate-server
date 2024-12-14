@@ -8,7 +8,7 @@ const port = process.env.PORT || 4900;
 // middleware
 app.use(
   cors({
-    origin: "https://real-estate-snowy-five.vercel.app",
+    origin: "http://localhost:3000",
     credentials: true,
   })
 );
@@ -152,6 +152,13 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await user.findOne(query);
+      res.send(result);
+    });
+    // delete user by id
+    app.delete("/user/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await user.deleteOne(query);
       res.send(result);
     });
     // make user role
@@ -355,6 +362,13 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await contactMsg.findOne(query);
+      res.send(result);
+    });
+    // delete contact by id
+    app.delete("/contact/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await contactMsg.deleteOne(query);
       res.send(result);
     });
     // all stats
